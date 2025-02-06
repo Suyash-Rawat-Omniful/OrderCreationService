@@ -1,0 +1,7 @@
+order_no,customer_name,sku_id,quantity
+1,SuyashRawat,SKU001,2
+1,SuyashRawat,SKU002,1
+1,SuyashRawat,SKU003,4
+2,SuyashRawat2,SKU001,2
+2,SuyashRawat2,SKU002,1
+2,SuyashRawat2,SKU003,4
