@@ -1,0 +1,115 @@
+server:
+  port: ":8081"
+
+
+
+env: "staging"
+
+log:
+  level: "debug"
+  format: "json"
+  request: true
+  response: true
+  request_debug: true
+
+service:
+  name: "tenant_service"
+
+redis:
+  clusterMode: false
+  hosts: "127.0.0.1:7005"
+  db: 1
+
+
+otp:
+  salt: "4S62BZNFXXSZLCRO"
+  expiryTime: 2
+
+worker:
+  createUser:
+    name: "local-tenant-service-create-user"
+    workerCount: 1
+    region: "eu-central-1"
+    endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/staging-tenant-service-create-user"
+    account: "348639420040"
+  locationMapping:
+    name: "staging-tenant-service-location-mapping-events"
+    workerCount: 1
+    region: "eu-central-1"
+    endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/local-tenant-service-location-mapping-events"
+    account: "348639420040"
+  redis:
+    name: "local-tenant-service-purge-cache"
+    workerCount: 1
+    region: "eu-central-1"
+    endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/local-tenant-service-purge-cache"
+    account: "348639420040"
+    concurrencyPerWorker: 1
+  orderUpdate:
+    name: "local-order-service-update-orders"
+    workerCount: 1
+    region: "eu-central-1"
+    endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/local-order-service-update-orders"
+    account: "348639420040"
+  email:
+    name: "email"
+    workerCount: 1
+    region: "eu-central-1"
+    endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/email"
+    account: "348639420040"
+    concurrencyPerWorker: 1
+  cities:
+    export:
+      name: "local-tenant-cities-export"
+      workerCount: 1
+      region: "eu-central-1"
+      endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/local-tenant-cities-export"
+      account: "348639420040"
+  notification:
+    name: "local-tenant-service-notification"
+    workerCount: 1
+    region: "eu-central-1"
+    endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/local-tenant-service-notification"
+    account: "348639420040"
+  city:
+    name: "local-tenant-service-city.fifo"
+    workerCount: 1
+    region: "eu-central-1"
+    endpoint: "https://sqs.eu-central-1.amazonaws.com/348639420040/local-tenant-service-city.fifo"
+    account: "348639420040"
+
+
+
+
+consumers:
+  tenantCreate:
+    topic: "omniful.tenant-service.tenant.create-events"
+    groupId: "1"
+    enabled: false
+  seller:
+    topic: "omniful.tenant-service.seller.events"
+
+onlineKafka:
+  brokers:
+    - "localhost:9092"
+  clientId: "tenant-service"
+  version: 2.0.0
+
+wmsService:
+  baseUrl: "http://wmsapi.omnifulinfra.com/"
+  timeout: 5
+
+
+
+
+constants:
+  addressAutofillVerify:
+    unit: "km"
+    allowedDistance: 1
+
+  enableCityAlias: false
+  cities:
+    export:
+      batchSize: 2000
+    import:
+      batchSize: 1000

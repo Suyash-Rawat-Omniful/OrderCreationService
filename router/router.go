@@ -10,5 +10,6 @@ import (
 func Initialize(ctx context.Context, s *http.Server) (err error) {
 	OrderV1 := s.Engine.Group("/api/V1")
 	OrderV1.POST("/order/bulk", controllers.UploadOrders)
+	OrderV1.POST("/order/parsecsv_directly", controllers.CallParseCSV)
 	return
 }

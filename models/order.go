@@ -10,9 +10,9 @@ type OrderItem struct {
 
 // Order represents the main order entity
 type Order struct {
-	ID           primitive.ObjectID  `bson:"_id,omitempty" json:"id"`                      // Order ID
-	SellerID     primitive.ObjectID  `bson:"seller_id,omitempty" json:"seller_id"`         // Seller reference
-	HubID        primitive.ObjectID  `bson:"hub_id,omitempty" json:"hub_id"`               // Hub reference
+	ID primitive.ObjectID `bson:"_id,omitempty" json:"id"` // Order ID
+	// SellerID     primitive.ObjectID  `bson:"seller_id,omitempty" json:"seller_id"`         // Seller reference
+	// HubID        primitive.ObjectID  `bson:"hub_id,omitempty" json:"hub_id"`               // Hub reference
 	CustomerName string              `bson:"customer_name,omitempty" json:"customer_name"` // Customer name
 	OrderNo      string              `bson:"order_no" json:"order_no"`                     // Unique order number
 	OrderItems   []OrderItem         `bson:"order_items" json:"order_items"`               // Array of order items

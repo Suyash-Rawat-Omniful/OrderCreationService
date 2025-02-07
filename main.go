@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"service1/database"
+	"service1/listeners"
 	"service1/router"
+
+	// orders "service1/service"
+	"service1/consumer"
 
 	"github.com/omniful/go_commons/http"
 )
@@ -12,12 +16,22 @@ import (
 func main() {
 	ctx := context.TODO()
 	database.ConnectMongo(ctx)
+	database.InitializeSqs(ctx)
+	database.InitializeKafkaProducer(ctx)
+	go consumer.Start()
+	go listeners.StartConsumer()
+
+	//to setup the server (go_commons se hai ye)
 	server := http.InitializeServer(":8080", 0, 0, 70)
-	fmt.Print("starting server")
+	fmt.Print("starting server\n")
+
+	//setup the routes(khud banaya hai)
 	err := router.Initialize(ctx, server)
 	if err != nil {
 
 	}
+
+	//server start karne ke liye(go_commons ka part hai)
 	err = server.StartServer("OMS")
 	if err != nil {
 		fmt.Println("Error in starting the server")
@@ -25,24 +39,3 @@ func main() {
 	}
 	fmt.Println("Server started")
 }
-
-// func runHttpServer(ctx context.Context) {
-// 	server := http.InitializeServer(":8080", 10*time.Second, 10*time.Second, 70*time.Second)
-
-// 	// Initialize middlewares and routes
-// 	err := router.Initialize(ctx, server)
-// 	if err != nil {
-// 		log.Errorf(err.Error())
-// 		panic(err)
-// 	}
-
-// 	log.Infof("Starting server on port" + ":8080")
-
-// 	err = server.StartServer("Tenant-service")
-// 	if err != nil {
-// 		log.Errorf(err.Error())
-// 		panic(err)
-// 	}
-
-// 	<-shutdown.GetWaitChannel()
-// }
