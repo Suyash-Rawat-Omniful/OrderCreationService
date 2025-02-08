@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"service1/models"
 	"time"
 
@@ -11,22 +12,16 @@ import (
 	"github.com/omniful/go_commons/pubsub"
 )
 
-// Implement message handler
 type MessageHandler struct{}
 
-// Process implements pubsub.IPubSubMessageHandler.
 func (h *MessageHandler) Process(ctx context.Context, message *pubsub.Message) error {
 	log.Printf("Received message: %s", string(message.Value))
-
-	// Define a variable to hold the parsed data
-	var order models.KafkaResponseOrderMessage
+	var order models.Order
 	err := json.Unmarshal(message.Value, &order)
 	if err != nil {
 		log.WithError(err).Error("Failed to parse Kafka message")
 		return err
 	}
-
-	// Call WMS Inventory Checking logic from here
 
 	return nil
 }
@@ -36,17 +31,20 @@ func (h *MessageHandler) Handle(ctx context.Context, msg *pubsub.Message) error 
 	return nil
 }
 
-// Initialize Kafka Consumer
 func InitializeKafkaConsumer(ctx context.Context) {
+	fmt.Print("starting consumer\n")
 	consumer := kafka.NewConsumer(
 		kafka.WithBrokers([]string{"localhost:9092"}),
 		kafka.WithConsumerGroup("my-consumer-group"),
-		kafka.WithClientID("my-consumer"),
+		kafka.WithClientID("oms-service-topic2"),
 		kafka.WithKafkaVersion("2.8.1"),
 		kafka.WithRetryInterval(time.Second),
 	)
 
 	handler := &MessageHandler{}
-	consumer.RegisterHandler("oms-service-topic2", handler)
+	err := consumer.RegisterHandler("oms-service-topic2", handler)
+	log.Error(err)
+	fmt.Print("startedconsumer\n")
 	consumer.Subscribe(ctx)
+	fmt.Print("staadfadfa\n")
 }

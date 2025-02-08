@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	// redis "service1/Redis"
+
 	"service1/kafka"
 
 	"github.com/joho/godotenv"
@@ -19,11 +21,18 @@ import (
 var DB *mongo.Client
 var Queue *sqs.Queue
 
+func Init(c context.Context) {
+	connectMongo(c)
+	initializeSqs(c)
+	initializeKafkaProducer()
+	// go kafka.InitializeKafkaConsumer(c)
+}
+
 func getDatabaseUri() string {
 	return "mongodb://127.0.0.1:27017/OMS"
 }
 
-func ConnectMongo(c context.Context) {
+func connectMongo(c context.Context) {
 	fmt.Println("Connecting to mongo...")
 	ctx, cancel := context.WithTimeout(c, 10*time.Second)
 	defer cancel()
@@ -42,18 +51,14 @@ func ConnectMongo(c context.Context) {
 
 	fmt.Println("Successfully connected to MongoDB!")
 }
-func InitializeSqs(ctx context.Context) {
+func initializeSqs(ctx context.Context) {
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("Error loading .env file:", err)
 	}
 	acc := os.Getenv("AWS_ACCOUNT")
 	queue_name := os.Getenv("QUEUE_NAME")
-	fmt.Print("acc -> ", acc, "\n")
-	fmt.Print("queue name -> ", queue_name, "\n")
 
 	sqsConfig := sqs.GetSQSConfig(ctx, false, "ord", "eu-north-1", acc, "")
-	fmt.Println(acc)
-	fmt.Println("acc")
 	url, err := sqs.GetUrl(ctx, sqsConfig, queue_name)
 	fmt.Println(*url)
 	if err != nil {
@@ -64,21 +69,22 @@ func InitializeSqs(ctx context.Context) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(queueInstance)
-
-	//this will send a message to queue in sqs
-	// orders.SetProducer(ctx, queueInstance)
 
 }
-func InitializeKafkaProducer(ctx context.Context) {
+func initializeKafkaProducer() {
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("Error loading .env file:", err)
+	}
+	topic := os.Getenv("TOPIC")
 	kafkaBrokers := make([]string, 1)
 	kafkaBrokers[0] = "localhost:9092"
-	kafkaClientID := "tenant-service"
-	kafkaVersion := "2.0.0"
+	kafkaClientID := topic
+	kafkaVersion := "2.8.1"
 	fmt.Print("kafka version is : ", kafkaVersion, "\n")
 
 	producer := k.NewProducer(
 		k.WithBrokers(kafkaBrokers),
+		k.WithConsumerGroup("my-consumer-group"),
 		k.WithClientID(kafkaClientID),
 		k.WithKafkaVersion(kafkaVersion),
 	)

@@ -2,8 +2,11 @@ package kafka
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/omniful/go_commons/kafka"
 	"github.com/omniful/go_commons/pubsub"
 )
@@ -30,8 +33,12 @@ func getProducer() *kafka.ProducerClient {
 
 func PublishMessageToKafka(bytesOrderItem []byte, orderID string) {
 	ctx := context.Background()
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("Error loading .env file:", err)
+	}
+	topic := os.Getenv("TOPIC")
 	msg := &pubsub.Message{
-		Topic: "oms-service-topic2",
+		Topic: topic,
 		Key:   orderID,
 		Value: bytesOrderItem,
 		Headers: map[string]string{

@@ -3,21 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"service1/consumer"
 	"service1/database"
 	"service1/listeners"
 	"service1/router"
 
 	// orders "service1/service"
-	"service1/consumer"
 
 	"github.com/omniful/go_commons/http"
 )
 
 func main() {
 	ctx := context.TODO()
-	database.ConnectMongo(ctx)
-	database.InitializeSqs(ctx)
-	database.InitializeKafkaProducer(ctx)
+	database.Init(ctx)
 	go consumer.Start()
 	go listeners.StartConsumer()
 
