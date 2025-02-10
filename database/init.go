@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	// redis "service1/Redis"
-
 	"service1/kafka"
 
 	"github.com/joho/godotenv"

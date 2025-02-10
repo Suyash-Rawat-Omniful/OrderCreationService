@@ -55,11 +55,11 @@ func Start() {
 				if err = json.Unmarshal(msg.Value, &str); err != nil {
 					fmt.Println(err)
 				} else {
-					fmt.Println("recieved :", str, "\n\n")
+					fmt.Print("recieved :", str, "\n\n")
 				}
 				fmt.Printf("Received order Count %d: | Topic(%s) | Message(%s) \n", msgCnt, string(msg.Topic), str)
 				order := string(msg.Value)
-				fmt.Printf("order: ", order, "\n\n\n")
+				fmt.Print("order: ", order, "\n\n\n")
 
 				objectID, _ := primitive.ObjectIDFromHex(str)
 
@@ -107,16 +107,15 @@ func Start() {
 					}
 					fmt.Print("url is ", url, "\n")
 					resp, _ := client.Get(req, body)
-					if err != nil || resp == nil {
+					if resp == nil {
 						fmt.Printf("Error making GET request to validate inventory: %v\n", err)
 						flag = false
 						continue
 					} else {
 						fmt.Print("response of the validate inventory is request is ", resp, "\n\n\n\n")
-						if resp.IsSuccess() {
-
+						if resp.StatusCode() != 200 {
+							flag = false
 						}
-						continue
 					}
 				}
 				if flag {

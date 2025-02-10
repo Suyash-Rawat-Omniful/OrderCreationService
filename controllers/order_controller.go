@@ -1,13 +1,11 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 
-	// "net/http"
 	"os"
 	"strconv"
 	"time"
@@ -19,8 +17,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/omniful/go_commons/csv"
-	"github.com/omniful/go_commons/http"
-	interservice_client "github.com/omniful/go_commons/interservice-client"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -86,7 +82,6 @@ func performcsvopr(filePath string) ([]*models.Order, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize CSV reader: %v", err)
 	}
-
 	for !Csv.IsEOF() {
 		var records csv.Records
 		records, err := Csv.ReadNextBatch()
@@ -97,10 +92,10 @@ func performcsvopr(filePath string) ([]*models.Order, error) {
 		fmt.Println("Processing records:")
 		fmt.Println(records)
 		for _, record := range records {
-			orderNo := record[0]      // order_no
-			customerName := record[1] // customer_name
-			skuIDStr := record[2]     // sku_id
-			quantityStr := record[3]  // quantity
+			orderNo := record[0]
+			customerName := record[1]
+			skuIDStr := record[2]
+			quantityStr := record[3]
 			hubIDStr := record[4]
 
 			skuID, err := strconv.Atoi(skuIDStr)
@@ -108,40 +103,42 @@ func performcsvopr(filePath string) ([]*models.Order, error) {
 				fmt.Println("invalid sku_id", skuIDStr, ":", err)
 				continue
 			}
+			hubID, err := strconv.Atoi(hubIDStr)
+			if err != nil {
+				fmt.Println("invalid hub_id", hubIDStr, ":", err)
+				continue
+			}
+			if !isValidHub(uint(hubID)) {
+				fmt.Println("invalid hub_id", hubIDStr, ":", err)
+				continue
+			}
 			if !isValidSKU(uint(skuID)) {
 				fmt.Println("sku -> ", skuIDStr, "doesn't exists")
 				continue
 			}
 
-			// Convert quantity to integer
 			quantity, err := strconv.Atoi(quantityStr)
 			if err != nil {
 				fmt.Print("invalid quantity ", quantityStr, ":", err)
 				continue
 			}
 
-			// Check if the order group for this order_no and customer_name already exists
 			orderKey := fmt.Sprintf("%s-%s", orderNo, customerName)
 			order, exists := orderGroups[orderKey]
 			if !exists {
-				// If order doesn't exist, create a new order
 				now := primitive.NewDateTimeFromTime(time.Now())
 				order = &models.Order{
-					ID: primitive.NewObjectID(),
-					// SellerID:     sellerID,
-					// HubID:        hubID,
+					ID:           primitive.NewObjectID(),
 					CustomerName: customerName,
 					OrderNo:      orderNo,
-					OrderItems:   []models.OrderItem{}, // Start with an empty slice of items
+					OrderItems:   []models.OrderItem{},
 					Status:       "on_hold",
 					CreatedAt:    now,
 					UpdatedAt:    now,
 				}
-				// Add the new order to the map
 				orderGroups[orderKey] = order
 			}
 
-			// Create a new OrderItem and append it to the order's OrderItems
 			orderItem := models.OrderItem{
 				SKUID:    skuIDStr,
 				Quantity: quantity,
@@ -151,7 +148,6 @@ func performcsvopr(filePath string) ([]*models.Order, error) {
 		}
 	}
 
-	// Convert the map of orders into a slice
 	var orders []*models.Order
 	for _, order := range orderGroups {
 		orders = append(orders, order)
@@ -203,69 +199,3 @@ func storeOrder(order *models.Order) error {
 
 	return nil
 }
-
-func isValidSKU(skuID uint) bool {
-	skuIDStr := strconv.Itoa(int(skuID))
-	config := interservice_client.Config{
-		ServiceName: "user-service",
-		BaseURL:     "http://localhost:8081/api/V1/skus/",
-		Timeout:     5 * time.Second,
-	}
-	client, err := interservice_client.NewClientWithConfig(config)
-	if err != nil {
-		return false
-	}
-	url := config.BaseURL + "validate/" + skuIDStr
-	body := map[string]string{
-		"hub_id": "",
-		"skus":   "",
-	}
-	bodyBytes, err := json.Marshal(body)
-	if err != nil {
-		return false
-	}
-	req := &http.Request{
-		Url:     url, // Use configured URL
-		Body:    bytes.NewReader(bodyBytes),
-		Timeout: 7 * time.Second,
-		Headers: map[string][]string{
-			"Content-Type": {"application/json"},
-		},
-	}
-	resp, _ := client.Get(req, "/")
-	if resp == nil {
-		return false
-	}
-	return resp.StatusCode() == 200
-}
-
-// func isValidHub(hubID uint) bool {
-// 	// Construct the URL for the GET request
-// 	url := fmt.Sprintf("http://localhost:8081/api/V1/hubs/validate/%d", hubID)
-
-// 	// Make the GET request
-// 	resp, err := http.Get(url)
-// 	if err != nil {
-// 		fmt.Printf("Error making GET request to validate Hub: %v\n", err)
-// 		return false
-// 	}
-// 	defer resp.Body.Close()
-
-// 	// Read the response body
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		fmt.Printf("Error reading response body: %v\n", err)
-// 		return false
-// 	}
-
-//		// Check the response status code
-//		if resp.StatusCode == http.StatusOK {
-//			// SKU is valid, return true
-//			fmt.Printf("Hub %d is valid\n", hubID)
-//			return true
-//		} else {
-//			// SKU is not valid, return false
-//			fmt.Printf("Invalid hub ID: %d\nResponse: %s\n", hubID, body)
-//			return false
-//		}
-//	}

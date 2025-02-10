@@ -8,8 +8,6 @@ import (
 	"service1/listeners"
 	"service1/router"
 
-	// orders "service1/service"
-
 	"github.com/omniful/go_commons/http"
 )
 
